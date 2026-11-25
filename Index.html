@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spirale di Raup</title>
+<meta name="description" content="Modella conchiglie in 3D con il modello di Raup (W, D, T, S). Esporta immagini e STL per la stampa 3D.">
+<meta property="og:title" content="Spirale di Raup – modella conchiglie">
+<meta property="og:description" content="Quattro numeri, una conchiglia: gioca con il modello di Raup dal telefono.">
+<meta name="theme-color" content="#0b1d22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: curioso e preciso, da quaderno di malacologo che fa calcoli
+   IDEA: un acquario notturno dove la conchiglia cresce davanti a te
+   PICTURE: la conchiglia 3D viva, a tutta larghezza, ruotabile col dito
+   COLOUR and TYPE: mare profondo #0b1d22, madreperla, accento corallo; Young Serif + Manrope
+   LAYOUT: telefono: titolo, conchiglia, preset, schede; desktop: conchiglia a sinistra, pannello a destra */
+:root{color-scheme:light dark;--bg:light-dark(#eef2f0,#0a1417);--ink:light-dark(#11262b,#e3eeec);--mute:light-dark(#55696c,#90a6a7);--line:light-dark(#d2dcda,#1e3236);--card:light-dark(#fff,#0f1f22);--acc:#ff6a4d;--acc2:light-dark(#c9452a,#ff8a70)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif;overflow-x:clip}
+header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:12px max(4vw,16px) 10px}
+h1{font:400 28px/1.05 "Young Serif",Georgia,serif;margin:0}
+header p{margin:0;color:var(--mute);font-size:14px}
+.app{display:grid}
+.stage{position:relative;height:min(56svh,560px);background:radial-gradient(120% 90% at 50% 28%,#235159,#0b1d22 72%);overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.hud{position:absolute;left:14px;top:12px;color:#cfe3e2;font-size:13px;font-variant-numeric:tabular-nums;pointer-events:none;text-shadow:0 1px 2px #0008}
+.sbtn{position:absolute;right:10px;bottom:10px;display:flex;gap:8px}
+.sbtn button,.btn{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid #ffffff33;background:#0b1d22cc;color:#eaf4f3;font:600 15px Manrope,sans-serif;cursor:pointer;backdrop-filter:blur(6px)}
+.sbtn button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#1b0b06}
+.panel{padding:0 0 40px}
+.presets{display:flex;gap:8px;overflow-x:auto;padding:12px max(4vw,16px);scroll-snap-type:x mandatory;scrollbar-width:none}
+.presets button{flex:none;scroll-snap-align:start;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px Manrope,sans-serif;cursor:pointer}
+.presets button.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.tabs{display:flex;gap:4px;padding:0 max(4vw,16px);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs button{flex:none;min-height:44px;padding:0 12px;background:none;border:0;border-bottom:3px solid transparent;color:var(--mute);font:600 15px Manrope,sans-serif;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-color:var(--acc)}
+.pane{padding:6px max(4vw,16px) 0}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding-top:8px}
+.row label{font-weight:600;font-size:15px}.row small{display:block;color:var(--mute);font-weight:400;font-size:13px}
+.row output{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.row input[type=range]{grid-column:1/-1;width:100%;height:36px;accent-color:var(--acc);margin:0}
+.pick{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding-top:12px}
+.pick label{display:flex;gap:8px;align-items:center;font-weight:600}
+select,input[type=text]{font:16px Manrope,sans-serif;min-height:44px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);width:100%}
+input[type=color]{width:52px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:3px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding-top:12px}
+.btn{background:var(--card);color:var(--ink);border-color:var(--line);backdrop-filter:none;border-radius:12px}
+.btn.pri{background:var(--acc);color:#1b0b06;border-color:var(--acc)}
+.note{color:var(--mute);font-size:14px;margin:10px 0 0}
+.info p{max-width:66ch;margin:10px 0}.info b{color:var(--acc2)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0b1d22;color:#eaf4f3;padding:10px 18px;border-radius:20px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9}
+#toast.on{opacity:1}
+#shot{position:fixed;inset:0;background:#000c;display:none;place-items:center;z-index:8;padding:20px;text-align:center;color:#fff}
+#shot img{max-width:100%;max-height:75svh;border-radius:12px}
+@media(min-width:900px){body{height:100svh;display:flex;flex-direction:column;overflow:hidden}.app{flex:1;grid-template-columns:minmax(0,1fr) 400px;min-height:0}.stage{height:auto}.panel{overflow-y:auto;border-left:1px solid var(--line)}}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<header><h1>Spirale di Raup</h1><p>quattro numeri, una conchiglia</p></header>
+<main class="app">
+  <section class="stage" aria-label="Conchiglia 3D">
+    <canvas id="cv"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="sbtn">
+      <button id="grow" type="button">Cresci</button>
+      <button id="spin" type="button" aria-pressed="true">Ruota</button>
+      <button id="rnd" type="button">Caso</button>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="presets" id="presets"></div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-t="forma" aria-selected="true">Forma</button>
+      <button role="tab" data-t="orn">Ornamenti</button>
+      <button role="tab" data-t="col">Colore</button>
+      <button role="tab" data-t="exp">Esporta</button>
+      <button role="tab" data-t="info">Info</button>
+    </nav>
+    <div class="pane" id="p-forma"></div>
+    <div class="pane" id="p-orn" hidden></div>
+    <div class="pane" id="p-col" hidden>
+      <div class="pick">
+        <label style="flex:1 1 200px">Disegno <select id="pat">
+          <option value="0">Uniforme</option><option value="1">Bande spirali</option><option value="2">Strisce assiali</option>
+          <option value="3">Zig-zag</option><option value="4">Maculato</option><option value="5">Linee di crescita</option></select></label>
+        <label>Fondo <input type="color" id="c1"></label>
+        <label>Disegno <input type="color" id="c2"></label>
+      </div>
+      <div id="p-col2"></div>
+    </div>
+    <div class="pane" id="p-exp" hidden>
+      <div class="acts">
+        <button class="btn pri" id="eSocial" type="button">Card social 1080²</button>
+        <button class="btn" id="ePng" type="button">Immagine PNG</button>
+        <button class="btn" id="eStl" type="button">Modello STL</button>
+        <button class="btn" id="eCopy" type="button">Copia codice</button>
+      </div>
+      <p class="note">L’STL ha uno spessore di parete regolabile qui sotto ed è dimensionato a 80 mm: pronto per lo slicer. Con D vicino a 0 i giri si compenetrano: in quel caso passalo prima da Blender o Meshmixer.</p>
+      <div class="row"><label for="thk">Spessore parete STL<small>in proporzione all’apertura</small></label><output id="thkO"></output><input type="range" id="thk" min="0.01" max="0.15" step="0.01" value="0.05"></div>
+      <div class="pick"><label style="flex:1 1 100%">Codice forma <input type="text" id="code" spellcheck="false" autocomplete="off"></label></div>
+      <div class="acts"><button class="btn" id="eLoad" type="button">Carica codice</button></div>
+      <p class="note">Il codice descrive tutta la conchiglia: incollalo in un commento e chi lo carica rivede la stessa forma.</p>
+    </div>
+    <div class="pane info" id="p-info" hidden>
+      <p>Nel 1966 David Raup mostrò che quasi ogni conchiglia avvolta si ottiene facendo girare una curva generatrice (l’apertura) attorno a un asse, mentre cresce e scende. Bastano quattro numeri.</p>
+      <p><b>W</b> – tasso di espansione: di quanto si ingrandisce l’apertura in un giro. Vicino a 1 i giri sono tanti e simili (Turritella); molto grande dà una sola valva, come un bivalve.</p>
+      <p><b>D</b> – distanza dall’asse: rapporto tra bordo interno ed esterno dell’apertura. 0 = giri serrati sull’asse; valori alti aprono l’ombelico e staccano i giri.</p>
+      <p><b>T</b> – traslazione lungo l’asse a ogni giro. 0 = conchiglia piana (Nautilus, Planorbis); valori alti = spira alta.</p>
+      <p><b>S</b> – forma dell’apertura (altezza/larghezza dell’ellisse).</p>
+      <p>Ruotando il dito giri la conchiglia, con due dita fai lo zoom. Le facce interne visibili sono rese in madreperla. Il famoso «cubo di Raup» mostra che le specie reali occupano solo una piccola parte di tutte le forme possibili: qui puoi esplorare anche quelle che la natura non ha mai fatto.</p>
+    </div>
+  </section>
+</main>
+<div id="shot"><div><img id="shotImg" alt="Immagine generata"><p>Tieni premuto sull’immagine per salvarla. Tocca fuori per chiudere.</p></div></div>
+<div id="toast" role="status"></div>
+<script>
+{
+const $=s=>document.querySelector(s);
+const TAU=Math.PI*2;
+const P={lw:0.3,D:0.1,T:1.2,S:1,N:4.5,rib:0,ribA:0.1,cord:0,cordA:0.1,pat:1,patN:4,c1:'#efe0c2',c2:'#7a3b22',sin:0};
+const PRESETS=[
+ ['Elica',{lw:0.3,D:0.12,T:1.3,S:1,N:4.5,rib:0,cord:0,pat:1,patN:5,c1:'#efe0c2',c2:'#6b3a1e'}],
+ ['Nautilus',{lw:0.49,D:0,T:0,S:1.35,N:3,rib:0,cord:0,pat:2,patN:9,c1:'#f4ede2',c2:'#a2532c'}],
+ ['Ammonite',{lw:0.27,D:0.38,T:0,S:0.95,N:6,rib:34,ribA:0.14,cord:0,pat:0,c1:'#b9a487',c2:'#5b4a37'}],
+ ['Planorbis',{lw:0.24,D:0.5,T:0,S:1,N:5,rib:0,cord:0,pat:5,patN:12,c1:'#9c6b3f',c2:'#3a2412'}],
+ ['Turritella',{lw:0.07,D:0.04,T:3.6,S:1,N:12,rib:0,cord:6,cordA:0.16,pat:2,patN:3,c1:'#e7d6bc',c2:'#8a5a3a'}],
+ ['Trochus',{lw:0.21,D:0,T:1.9,S:0.75,N:7,rib:0,cord:10,cordA:0.08,pat:3,patN:10,c1:'#f0d9cf',c2:'#b2453a'}],
+ ['Cono',{lw:0.9,D:0,T:1.6,S:3,N:7,rib:0,cord:0,pat:4,patN:14,c1:'#f6efe1',c2:'#7c3d17'}],
+ ['Murice',{lw:0.36,D:0.05,T:1.6,S:1.1,N:6,rib:7,ribA:0.35,cord:14,cordA:0.08,pat:0,c1:'#e9d9c5',c2:'#7a5a44'}],
+ ['Bivalve',{lw:3,D:0,T:0.1,S:0.9,N:0.55,rib:0,cord:22,cordA:0.07,pat:2,patN:40,c1:'#f2e4d4',c2:'#c7663f'}]
+];
+const DEF_F=[
+ ['lw','W','espansione per giro',0.02,4,0.01,v=>{const w=10**v;return w<10?w.toFixed(2):w<1000?w.toFixed(0):w.toExponential(1)}],
+ ['D','D','distanza dall’asse',0,0.95,0.01,v=>v.toFixed(2)],
+ ['T','T','traslazione',0,6,0.05,v=>v.toFixed(2)],
+ ['S','S','forma apertura',0.25,4,0.01,v=>v.toFixed(2)],
+ ['N','Giri','numero di giri',0.3,12,0.1,v=>v.toFixed(1)]];
+const DEF_O=[
+ ['rib','Coste','assiali per giro',0,60,1,v=>v.toFixed(0)],
+ ['ribA','Rilievo coste','',0,0.4,0.01,v=>v.toFixed(2)],
+ ['cord','Cordoni','spirali sull’apertura',0,40,1,v=>v.toFixed(0)],
+ ['cordA','Rilievo cordoni','',0,0.4,0.01,v=>v.toFixed(2)]];
+const DEF_C=[['patN','Frequenza disegno','',1,30,1,v=>v.toFixed(0)]];
+const rowHTML=d=>`<div class="row"><label for="s-${d[0]}">${d[1]}${d[2]?`<small>${d[2]}</small>`:''}</label><output id="o-${d[0]}"></output><input type="range" id="s-${d[0]}" min="${d[3]}" max="${d[4]}" step="${d[5]}"></div>`;
+$('#p-forma').innerHTML=DEF_F.map(rowHTML).join('')+`<div class="pick"><label><input type="checkbox" id="sin"> Sinistrorsa</label></div>`;
+$('#p-orn').innerHTML=DEF_O.map(rowHTML).join('');
+$('#p-col2').innerHTML=DEF_C.map(rowHTML).join('');
+const ALL=[...DEF_F,...DEF_O,...DEF_C];
+$('#presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-i="${i}">${p[0]}</button>`).join('');
+
+function syncUI(){
+  for(const d of ALL){$('#s-'+d[0]).value=P[d[0]];$('#o-'+d[0]).textContent=d[6](+P[d[0]])}
+  $('#pat').value=P.pat;$('#c1').value=P.c1;$('#c2').value=P.c2;$('#sin').checked=!!P.sin;
+  $('#hud').textContent=`W ${DEF_F[0][6](P.lw)} · D ${P.D.toFixed(2)} · T ${P.T.toFixed(2)} · S ${P.S.toFixed(2)}`;
+}
+let needBuild=true,FIT=null,saveT=0;
+function changed(){needBuild=true;FIT=null;syncUI();clearTimeout(saveT);saveT=setTimeout(persist,400)}
+for(const d of ALL)$('#s-'+d[0]).addEventListener('input',e=>{P[d[0]]=+e.target.value;markPreset(-1);changed()});
+$('#pat').onchange=e=>{P.pat=+e.target.value;changed()};
+$('#c1').oninput=e=>{P.c1=e.target.value;changed()};
+$('#c2').oninput=e=>{P.c2=e.target.value;changed()};
+$('#sin').onchange=e=>{P.sin=e.target.checked?1:0;changed()};
+function markPreset(i){document.querySelectorAll('#presets button').forEach((b,k)=>b.classList.toggle('on',k===i))}
+$('#presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i;
+  Object.assign(P,{rib:0,ribA:0.1,cord:0,cordA:0.1,sin:0},PRESETS[i][1]);markPreset(i);changed()};
+$('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!=='p-'+b.dataset.t)};
+
+/* ---------- codice condivisibile (solo cifre, lettere e trattini) ---------- */
+const KEYS=[['lw',100],['D',100],['T',100],['S',100],['N',10],['rib',1],['ribA',100],['cord',1],['cordA',100],['pat',1],['patN',1],['sin',1]];
+const encode=()=>'r-'+KEYS.map(([k,m])=>Math.round(P[k]*m)).join('-')+'-'+P.c1.slice(1)+'-'+P.c2.slice(1);
+function decode(s){const a=String(s).trim().replace(/^#/,'').split('-');if(a[0]!=='r'||a.length!==KEYS.length+3)return false;
+  const v=a.slice(1,KEYS.length+1).map(Number);if(v.some(x=>!isFinite(x)))return false;
+  const hex=/^[0-9a-f]{6}$/i;if(!hex.test(a[KEYS.length+1])||!hex.test(a[KEYS.length+2]))return false;
+  KEYS.forEach(([k,m],i)=>P[k]=v[i]/m);P.c1='#'+a[KEYS.length+1];P.c2='#'+a[KEYS.length+2];
+  for(const d of ALL)P[d[0]]=Math.min(d[4],Math.max(d[3],P[d[0]]));P.pat=Math.min(5,Math.max(0,P.pat|0));return true}
+function persist(){const c=encode();$('#code').value=c;try{history.replaceState(null,'','#'+c)}catch(e){}try{localStorage.setItem('raup',c)}catch(e){}}
+
+/* ---------- geometria di Raup ---------- */
+const hex3=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255);
+const sm=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+function pattern(th,ph){const n=P.patN;
+  switch(P.pat){
+    case 1:return sm(.35,.65,.5+.5*Math.cos(n*ph));
+    case 2:return sm(.4,.6,.5+.5*Math.cos(n*th));
+    case 3:{const v=ph/TAU*3,tri=Math.abs(v-Math.floor(v)-.5)*2;return sm(.4,.6,.5+.5*Math.cos(n*th+5*tri))}
+    case 4:return sm(.45,.7,(.5+.5*Math.cos(n*th))*(.5+.5*Math.cos(n*ph)));
+    case 5:return .55*sm(.8,1,.5+.5*Math.cos(n*6*th));
+    default:return 0}}
+let MAXV=70000;
+function build(frac,fit,hires){
+  const lnW=Math.log(10**P.lw),D=Math.min(P.D,0.97),Rc=(1+D)/(1-D);
+  const np=hires?96:(P.cord>16?72:48);
+  let nt=Math.max(24,Math.round(P.N*(P.rib>20?160:110)*(hires?2:1)));
+  nt=Math.min(nt,Math.floor((hires?400000:MAXV)/(np+1)));
+  const th0=-P.N*TAU,th1=th0*(1-frac)+1e-9*frac,nv=nt*(np+1);
+  const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),col=new Float32Array(nv*3),G=new Float32Array(nt);
+  const c1=hex3(P.c1),c2=hex3(P.c2),sx=P.sin?-1:1;
+  for(let i=0;i<nt;i++){const th=th0+(th1-th0)*i/(nt-1),g=Math.exp(th/TAU*lnW);G[i]=g;
+    const rm=1+(P.rib>0?P.ribA*Math.pow(.5+.5*Math.cos(P.rib*th),3):0),ct=Math.cos(th),st=Math.sin(th);
+    for(let j=0;j<=np;j++){const ph=TAU*j/np,m=rm*(1+(P.cord>0?P.cordA*Math.pow(.5+.5*Math.cos(P.cord*ph),2):0));
+      const r=g*(Rc+m*Math.cos(ph)),k=(i*(np+1)+j)*3;
+      pos[k]=sx*r*ct;pos[k+1]=g*(-P.T*Rc+m*P.S*Math.sin(ph));pos[k+2]=r*st;
+      const p=pattern(th,ph);for(let c=0;c<3;c++)col[k+c]=c1[c]+(c2[c]-c1[c])*p}}
+  if(!fit){const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];
+    for(let k=0;k<pos.length;k+=3)for(let c=0;c<3;c++){mn[c]=Math.min(mn[c],pos[k+c]);mx[c]=Math.max(mx[c],pos[k+c])}
+    const e=Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2])||1;fit={c:mn.map((v,c)=>(v+mx[c])/2),s:1.7/e}}
+  for(let k=0;k<pos.length;k+=3)for(let c=0;c<3;c++)pos[k+c]=(pos[k+c]-fit.c[c])*fit.s;
+  const id=(i,j)=>(i*(np+1)+j)*3;
+  for(let i=0;i<nt;i++){const a=id(Math.min(i+1,nt-1),0)-id(Math.max(i-1,0),0);
+    for(let j=0;j<=np;j++){const k=id(i,j),ka=k+a,kb=id(i,j===np?1:j+1),kc=id(i,j===0?np-1:j-1);
+      const ip=id(Math.min(i+1,nt-1),j),im=id(Math.max(i-1,0),j);
+      const tx=pos[ip]-pos[im],ty=pos[ip+1]-pos[im+1],tz=pos[ip+2]-pos[im+2];
+      const fx=pos[kb]-pos[kc],fy=pos[kb+1]-pos[kc+1],fz=pos[kb+2]-pos[kc+2];
+      let nx=fy*tz-fz*ty,ny=fz*tx-fx*tz,nz=fx*ty-fy*tx;const l=Math.hypot(nx,ny,nz)||1e-12,sg=sx/l;
+      nor[k]=nx*sg;nor[k+1]=ny*sg;nor[k+2]=nz*sg;void ka}}
+  const idx=new Uint32Array((nt-1)*np*6);let q=0;
+  for(let i=0;i<nt-1;i++)for(let j=0;j<np;j++){const a=i*(np+1)+j,b=a+np+1;idx[q++]=a;idx[q++]=b;idx[q++]=a+1;idx[q++]=a+1;idx[q++]=b;idx[q++]=b+1}
+  return {pos,nor,col,idx,nt,np,G,fit}}
+
+/* ---------- WebGL ---------- */
+const cv=$('#cv'),gl=cv.getContext('webgl',{antialias:true,preserveDrawingBuffer:true,alpha:true});
+if(!gl){$('#hud').textContent='WebGL non disponibile su questo dispositivo'}
+const U32=gl&&gl.getExtension('OES_element_index_uint');if(!U32)MAXV=65000;
+const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+const prog=gl.createProgram();
+gl.attachShader(prog,sh(gl.VERTEX_SHADER,`attribute vec3 p,n,c;uniform mat4 M;varying vec3 vp,vn,vc;void main(){vp=p;vn=n;vc=c;gl_Position=M*vec4(p,1.);}`));
+gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,`precision mediump float;uniform vec3 E;varying vec3 vp,vn,vc;
+void main(){vec3 N=normalize(vn);vec3 V=normalize(E-vp);float ins=0.;if(dot(N,V)<0.){N=-N;ins=1.;}
+float w=vp.y*30.+vp.x*9.;vec3 nac=vec3(.9,.87,.92)+.07*vec3(sin(w),sin(w+2.1),sin(w+4.2));
+vec3 b=mix(vc,nac,ins*.85);vec3 L1=normalize(vec3(.6,.85,.55)),L2=normalize(vec3(-.7,.15,-.5));
+float d=max(dot(N,L1),0.)*.85+max(dot(N,L2),0.)*.3+.22+.12*N.y;
+float sp=pow(max(dot(N,normalize(L1+V)),0.),36.)*(.28+.3*ins);
+gl_FragColor=vec4(b*d+sp,1.);}`));
+gl.linkProgram(prog);gl.useProgram(prog);
+const bufs={p:gl.createBuffer(),n:gl.createBuffer(),c:gl.createBuffer(),i:gl.createBuffer()};let count=0;
+function upload(m){for(const k of ['p','n','c']){const a=gl.getAttribLocation(prog,k);gl.bindBuffer(gl.ARRAY_BUFFER,bufs[k]);
+  gl.bufferData(gl.ARRAY_BUFFER,k==='p'?m.pos:k==='n'?m.nor:m.col,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,3,gl.FLOAT,false,0,0)}
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,bufs.i);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,U32?m.idx:Uint16Array.from(m.idx),gl.DYNAMIC_DRAW);count=m.idx.length}
+const persp=(f,a,n,fa)=>{const t=1/Math.tan(f/2);return[t/a,0,0,0,0,t,0,0,0,0,(fa+n)/(n-fa),-1,0,0,2*fa*n/(n-fa),0]};
+function look(e){const l=Math.hypot(...e),z=e.map(v=>v/l);let x=[z[2],0,-z[0]];const lx=Math.hypot(...x)||1;x=x.map(v=>v/lx);
+  const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]],d=(a)=>-(a[0]*e[0]+a[1]*e[1]+a[2]*e[2]);
+  return[x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,d(x),d(y),d(z),1]}
+function mul(a,b){const r=new Array(16).fill(0);for(let c=0;c<4;c++)for(let i=0;i<4;i++)for(let k=0;k<4;k++)r[c*4+i]+=a[k*4+i]*b[c*4+k];return r}
+const cam={yaw:0.6,pitch:0.32,dist:3.3};
+function draw(){const w=cv.width,h=cv.height;gl.viewport(0,0,w,h);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+  const e=[cam.dist*Math.cos(cam.pitch)*Math.sin(cam.yaw),cam.dist*Math.sin(cam.pitch),cam.dist*Math.cos(cam.pitch)*Math.cos(cam.yaw)];
+  gl.uniformMatrix4fv(gl.getUniformLocation(prog,'M'),false,new Float32Array(mul(persp(0.7,w/h,0.05,50),look(e))));
+  gl.uniform3fv(gl.getUniformLocation(prog,'E'),e);gl.drawElements(gl.TRIANGLES,count,U32?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT,0)}
+function resize(){const d=Math.min(2,devicePixelRatio||1);cv.width=Math.max(1,cv.clientWidth*d|0);cv.height=Math.max(1,cv.clientHeight*d|0);dirty=true}
+let dirty=true,spin=!matchMedia('(prefers-reduced-motion: reduce)').matches,growT=0;
+$('#spin').setAttribute('aria-pressed',spin);
+const ro=new ResizeObserver(resize);ro.observe(cv);
+
+/* ---------- gesti ---------- */
+const ptr=new Map();let pinch=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY])});
+cv.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);
+  if(ptr.size===1){cam.yaw-=(e.clientX-o[0])*0.008;cam.pitch=Math.max(-1.45,Math.min(1.45,cam.pitch+(e.clientY-o[1])*0.008))}
+  else if(ptr.size===2){const [a,b]=[...ptr.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch)cam.dist=Math.max(1.2,Math.min(9,cam.dist*pinch/d));pinch=d}
+  dirty=true});
+const up=e=>{ptr.delete(e.pointerId);pinch=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.max(1.2,Math.min(9,cam.dist*Math.exp(e.deltaY*0.001)));dirty=true},{passive:false});
+
+$('#spin').onclick=()=>{spin=!spin;$('#spin').setAttribute('aria-pressed',spin)};
+$('#grow').onclick=()=>{if(!FIT)FIT=build(1).fit;growT=performance.now()};
+$('#rnd').onclick=()=>{const r=(a,b)=>a+Math.random()*(b-a),hsl=(h,s,l)=>{const c=document.createElement('canvas').getContext('2d');c.fillStyle=`hsl(${h} ${s}% ${l}%)`;return c.fillStyle};
+  const h=r(10,45);Object.assign(P,{lw:Math.random()<.15?r(1,3):r(0.06,0.7),D:Math.random()<.5?r(0,.15):r(.15,.65),T:Math.random()<.3?0:r(.3,4),S:r(.6,2),N:r(2.5,8),
+  rib:Math.random()<.4?Math.round(r(4,40)):0,ribA:r(.05,.3),cord:Math.random()<.4?Math.round(r(3,25)):0,cordA:r(.04,.15),pat:Math.floor(r(0,6)),patN:Math.round(r(2,16)),
+  c1:hsl(h,r(25,60),r(78,92)),c2:hsl(h+r(-15,15),r(40,70),r(22,40)),sin:Math.random()<.1?1:0});markPreset(-1);changed()};
+
+function frame(now){
+  if(growT){const t=Math.min(1,(now-growT)/4500),f=.02+.98*(1-Math.pow(1-t,2));upload(build(f,FIT));dirty=true;if(t>=1){growT=0;needBuild=true}}
+  else if(needBuild){const m=build(1,null);FIT=m.fit;upload(m);needBuild=false;dirty=true}
+  if(spin&&!ptr.size){cam.yaw+=0.005;dirty=true}
+  if(dirty&&gl){draw();dirty=false}
+  requestAnimationFrame(frame)}
+
+/* ---------- esportazione ---------- */
+let DL=null;
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2200)};
+async function save(name,blob,isImg){
+  if(DL){try{await DL.save({filename:name,data:blob});toast('Salvato: '+name);return}catch(e){
+    try{await DL.save({filename:name,data:new Uint8Array(await blob.arrayBuffer())});toast('Salvato: '+name);return}catch(e2){}}}
+  if(window.top===window.self){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Scaricato: '+name);return}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}catch(e){}
+  if(isImg){$('#shotImg').src=URL.createObjectURL(blob);$('#shot').style.display='grid'}else toast('Se il download non parte, apri l’app nella sua pagina')}
+$('#shot').onclick=e=>{if(e.target.id!=='shotImg')$('#shot').style.display='none'};
+function snapshot(W,H,card){
+  const ow=cv.width,oh=cv.height;cv.width=W;cv.height=H;draw();
+  const o=document.createElement('canvas');o.width=W;o.height=H;const c=o.getContext('2d');
+  const g=c.createRadialGradient(W/2,H*.28,0,W/2,H*.28,Math.max(W,H)*.85);g.addColorStop(0,'#235159');g.addColorStop(.72,'#0b1d22');
+  c.fillStyle=g;c.fillRect(0,0,W,H);c.drawImage(cv,0,0);
+  if(card){c.fillStyle='#eaf4f3';c.font=`${W*.055}px "Young Serif",Georgia,serif`;c.fillText('Spirale di Raup',W*.06,H*.1);
+    c.font=`600 ${W*.028}px Manrope,sans-serif`;c.fillStyle='#cfe3e2';
+    c.fillText(`W ${DEF_F[0][6](P.lw)}   D ${P.D.toFixed(2)}   T ${P.T.toFixed(2)}   S ${P.S.toFixed(2)}`,W*.06,H*.15);
+    c.font=`${W*.022}px Manrope,sans-serif`;c.fillStyle='#ff8a70';c.fillText('codice: '+encode(),W*.06,H*.95)}
+  cv.width=ow;cv.height=oh;dirty=true;return new Promise(r=>o.toBlob(r,'image/png'))}
+$('#eSocial').onclick=async()=>save('raup-'+Date.now()+'.png',await snapshot(1080,1080,true),true);
+$('#ePng').onclick=async()=>save('raup-'+Date.now()+'.png',await snapshot(1600,1600,false),true);
+$('#thk').oninput=e=>$('#thkO').textContent=(+e.target.value).toFixed(2);$('#thkO').textContent='0.05';
+$('#eStl').onclick=()=>{toast('Preparo l’STL…');setTimeout(()=>{
+  const m=build(1,null,true),{pos,nor,nt,np,G}=m,thk=+$('#thk').value*m.fit.s,nr=np+1,nv=nt*nr;
+  const all=new Float32Array(nv*6);all.set(pos);for(let v=0;v<nv;v++){const o=thk*G[(v/nr)|0];for(let c=0;c<3;c++)all[nv*3+v*3+c]=pos[v*3+c]-nor[v*3+c]*o}
+  const tris=[];const T=(a,b,c)=>tris.push(a,b,c);
+  for(let i=0;i<nt-1;i++)for(let j=0;j<np;j++){const a=i*nr+j,b=a+nr;T(a,a+1,b);T(a+1,b+1,b);T(nv+a,nv+b,nv+a+1);T(nv+a+1,nv+b,nv+b+1)}
+  for(const i of[0,nt-1])for(let j=0;j<np;j++){const a=i*nr+j;if(i===0){T(a,nv+a,a+1);T(a+1,nv+a,nv+a+1)}else{T(a,a+1,nv+a);T(a+1,nv+a+1,nv+a)}}
+  let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let k=0;k<all.length;k+=3)for(let c=0;c<3;c++){mn[c]=Math.min(mn[c],all[k+c]);mx[c]=Math.max(mx[c],all[k+c])}
+  const sc=80/Math.max(mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]),n=tris.length/3,buf=new ArrayBuffer(84+n*50),dv=new DataView(buf);dv.setUint32(80,n,true);
+  const V=(i,c)=>c===1?(all[i*3+2]-mn[2])*sc:c===2?(all[i*3+1]-mn[1])*sc:(all[i*3]-mn[0])*sc;
+  for(let t=0;t<n;t++){const o=84+t*50,[a,b,c]=[tris[t*3],tris[t*3+1],tris[t*3+2]];
+    const u=[0,1,2].map(k=>V(b,k)-V(a,k)),w=[0,1,2].map(k=>V(c,k)-V(a,k)),nn=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]],l=Math.hypot(...nn)||1;
+    for(let k=0;k<3;k++)dv.setFloat32(o+k*4,nn[k]/l,true);
+    [a,b,c].forEach((vi,q)=>{for(let k=0;k<3;k++)dv.setFloat32(o+12+q*12+k*4,V(vi,k),true)})}
+  save('raup-'+Date.now()+'.stl',new Blob([buf],{type:'model/stl'}),false)},30)};
+$('#eCopy').onclick=async()=>{const c=encode();try{await navigator.clipboard.writeText(c);toast('Codice copiato')}catch(e){$('#code').select();toast('Seleziona e copia il codice')}};
+$('#eLoad').onclick=()=>{if(decode($('#code').value)){markPreset(-1);changed();toast('Forma caricata')}else toast('Codice non valido')};
+
+/* ---------- avvio ---------- */
+let start=null;try{start=localStorage.getItem('raup')}catch(e){}
+if(!(location.hash.startsWith('#r-')&&decode(location.hash))&&!(start&&decode(start)))markPreset(0);
+syncUI();persist();requestAnimationFrame(frame);
+setTimeout(()=>{if(window.claude&&claude.use)claude.use('downloads').then(d=>DL=d).catch(()=>{})},0);
+}
+</script>
+</body>
+</html>
